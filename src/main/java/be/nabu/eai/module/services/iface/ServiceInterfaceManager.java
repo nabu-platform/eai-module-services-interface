@@ -5,11 +5,11 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
+import be.nabu.eai.module.types.structure.StructureManager;
 import be.nabu.eai.repository.EAIRepositoryUtils;
 import be.nabu.eai.repository.api.ArtifactManager;
 import be.nabu.eai.repository.api.ModifiableNodeEntry;
 import be.nabu.eai.repository.api.ResourceEntry;
-import be.nabu.eai.repository.managers.StructureManager;
 import be.nabu.libs.artifacts.ArtifactResolverFactory;
 import be.nabu.libs.artifacts.api.Artifact;
 import be.nabu.libs.property.ValueUtils;
