@@ -1,6 +1,7 @@
 package be.nabu.eai.module.services.iface;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
@@ -8,6 +9,7 @@ import java.util.List;
 import be.nabu.eai.module.types.structure.StructureManager;
 import be.nabu.eai.repository.EAIRepositoryUtils;
 import be.nabu.eai.repository.api.ArtifactManager;
+import be.nabu.eai.repository.api.BrokenReferenceArtifactManager;
 import be.nabu.eai.repository.api.ModifiableNodeEntry;
 import be.nabu.eai.repository.api.ResourceEntry;
 import be.nabu.libs.artifacts.ArtifactResolverFactory;
@@ -16,6 +18,8 @@ import be.nabu.libs.property.ValueUtils;
 import be.nabu.libs.resources.ResourceReadableContainer;
 import be.nabu.libs.resources.ResourceWritableContainer;
 import be.nabu.libs.resources.api.ReadableResource;
+import be.nabu.libs.resources.api.Resource;
+import be.nabu.libs.resources.api.ResourceContainer;
 import be.nabu.libs.resources.api.WritableResource;
 import be.nabu.libs.services.api.DefinedServiceInterface;
 import be.nabu.libs.services.api.ModifiableServiceInterface;
@@ -33,7 +37,7 @@ import be.nabu.utils.io.api.ByteBuffer;
 import be.nabu.utils.io.api.ReadableContainer;
 import be.nabu.utils.io.api.WritableContainer;
 
-public class ServiceInterfaceManager implements ArtifactManager<DefinedServiceInterface> {
+public class ServiceInterfaceManager implements ArtifactManager<DefinedServiceInterface>, BrokenReferenceArtifactManager<DefinedServiceInterface> {
 
 	public Pipeline loadPipeline(ResourceEntry entry, List<Validation<?>> messages) throws IOException, ParseException {
 		// we need to load the pipeline which is basically a structure
@@ -157,6 +161,16 @@ public class ServiceInterfaceManager implements ArtifactManager<DefinedServiceIn
 		}
 		messages.addAll(StructureManager.updateReferences(artifact.getInputDefinition(), from, to));
 		messages.addAll(StructureManager.updateReferences(artifact.getOutputDefinition(), from, to));
+		return messages;
+	}
+	
+	@Override
+	public List<Validation<?>> updateBrokenReference(ResourceContainer<?> container, String from, String to) throws IOException {
+		List<Validation<?>> messages = new ArrayList<Validation<?>>();
+		Resource child = container.getChild("pipeline.xml");
+		if (child != null) {
+			EAIRepositoryUtils.updateBrokenReference(child, from, to, Charset.forName("UTF-8"));
+		}
 		return messages;
 	}
 }
