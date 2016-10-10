@@ -20,16 +20,15 @@ import be.nabu.eai.repository.resources.RepositoryEntry;
 import be.nabu.jfx.control.tree.Tree;
 import be.nabu.libs.property.api.Property;
 import be.nabu.libs.property.api.Value;
-import be.nabu.libs.services.api.DefinedServiceInterface;
 import be.nabu.libs.services.vm.Pipeline;
 import be.nabu.libs.types.api.Element;
 import be.nabu.libs.types.api.ModifiableComplexType;
 import be.nabu.libs.types.structure.Structure;
 
-public class ServiceInterfaceGUIManager extends BasePortableGUIManager<DefinedServiceInterface, BaseArtifactGUIInstance<DefinedServiceInterface>> {
+public class ServiceInterfaceGUIManager extends BasePortableGUIManager<DefinedServiceInterfaceArtifact, BaseArtifactGUIInstance<DefinedServiceInterfaceArtifact>> {
 
 	public ServiceInterfaceGUIManager() {
-		super("Service Interface", DefinedServiceInterface.class, new ServiceInterfaceManager());
+		super("Service Interface", DefinedServiceInterfaceArtifact.class, new ServiceInterfaceManager());
 	}
 
 	@Override
@@ -43,22 +42,22 @@ public class ServiceInterfaceGUIManager extends BasePortableGUIManager<DefinedSe
 	}
 
 	@Override
-	protected BaseArtifactGUIInstance<DefinedServiceInterface> newGUIInstance(Entry entry) {
-		return new BaseArtifactGUIInstance<DefinedServiceInterface>(this, entry);
+	protected BaseArtifactGUIInstance<DefinedServiceInterfaceArtifact> newGUIInstance(Entry entry) {
+		return new BaseArtifactGUIInstance<DefinedServiceInterfaceArtifact>(this, entry);
 	}
 
 	@Override
-	protected void setEntry(BaseArtifactGUIInstance<DefinedServiceInterface> guiInstance, ResourceEntry entry) {
+	protected void setEntry(BaseArtifactGUIInstance<DefinedServiceInterfaceArtifact> guiInstance, ResourceEntry entry) {
 		guiInstance.setEntry(entry);
 	}
 
 	@Override
-	protected DefinedServiceInterface newInstance(MainController controller, RepositoryEntry entry, Value<?>...values) throws IOException {
-		return new ServiceInterfaceManager.DefinedServiceInterfaceImpl(entry.getId(), new Pipeline(new Structure(), new Structure()));
+	protected DefinedServiceInterfaceArtifact newInstance(MainController controller, RepositoryEntry entry, Value<?>...values) throws IOException {
+		return new DefinedServiceInterfaceArtifact(entry.getId(), new Pipeline(new Structure(), new Structure()));
 	}
 
 	@Override
-	public void display(MainController controller, AnchorPane pane, DefinedServiceInterface instance) throws IOException, ParseException {
+	public void display(MainController controller, AnchorPane pane, DefinedServiceInterfaceArtifact instance) throws IOException, ParseException {
 		SplitPane split = new SplitPane();
 		split.setOrientation(Orientation.HORIZONTAL);
 		
@@ -99,7 +98,7 @@ public class ServiceInterfaceGUIManager extends BasePortableGUIManager<DefinedSe
 	}
 
 	@Override
-	protected void setInstance(BaseArtifactGUIInstance<DefinedServiceInterface> guiInstance, DefinedServiceInterface instance) {
+	protected void setInstance(BaseArtifactGUIInstance<DefinedServiceInterfaceArtifact> guiInstance, DefinedServiceInterfaceArtifact instance) {
 		guiInstance.setArtifact(instance);
 	}
 }

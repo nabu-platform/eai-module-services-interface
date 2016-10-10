@@ -14,7 +14,6 @@ import be.nabu.eai.repository.api.ModifiableNodeEntry;
 import be.nabu.eai.repository.api.ResourceEntry;
 import be.nabu.libs.artifacts.ArtifactResolverFactory;
 import be.nabu.libs.artifacts.api.Artifact;
-import be.nabu.libs.property.ValueUtils;
 import be.nabu.libs.resources.ResourceReadableContainer;
 import be.nabu.libs.resources.ResourceWritableContainer;
 import be.nabu.libs.resources.api.ReadableResource;
@@ -25,8 +24,6 @@ import be.nabu.libs.services.api.DefinedServiceInterface;
 import be.nabu.libs.services.api.ModifiableServiceInterface;
 import be.nabu.libs.services.api.ServiceInterface;
 import be.nabu.libs.services.vm.Pipeline;
-import be.nabu.libs.services.vm.PipelineInterfaceProperty;
-import be.nabu.libs.types.api.ComplexType;
 import be.nabu.libs.types.definition.xml.XMLDefinitionMarshaller;
 import be.nabu.libs.types.definition.xml.XMLDefinitionUnmarshaller;
 import be.nabu.libs.validator.api.Validation;
@@ -37,7 +34,7 @@ import be.nabu.utils.io.api.ByteBuffer;
 import be.nabu.utils.io.api.ReadableContainer;
 import be.nabu.utils.io.api.WritableContainer;
 
-public class ServiceInterfaceManager implements ArtifactManager<DefinedServiceInterface>, BrokenReferenceArtifactManager<DefinedServiceInterface> {
+public class ServiceInterfaceManager implements ArtifactManager<DefinedServiceInterfaceArtifact>, BrokenReferenceArtifactManager<DefinedServiceInterfaceArtifact> {
 
 	public Pipeline loadPipeline(ResourceEntry entry, List<Validation<?>> messages) throws IOException, ParseException {
 		// we need to load the pipeline which is basically a structure
@@ -54,15 +51,15 @@ public class ServiceInterfaceManager implements ArtifactManager<DefinedServiceIn
 	}
 	
 	@Override
-	public DefinedServiceInterface load(ResourceEntry entry, List<Validation<?>> messages) throws IOException, ParseException {
+	public DefinedServiceInterfaceArtifact load(ResourceEntry entry, List<Validation<?>> messages) throws IOException, ParseException {
 		Pipeline pipeline = loadPipeline(entry, messages);
-		return new DefinedServiceInterfaceImpl(entry.getId(), pipeline);
+		return new DefinedServiceInterfaceArtifact(entry.getId(), pipeline);
 	}
 
 	@Override
-	public List<Validation<?>> save(ResourceEntry entry, DefinedServiceInterface artifact) throws IOException {
-		Pipeline pipeline = artifact instanceof DefinedServiceInterfaceImpl 
-			? ((DefinedServiceInterfaceImpl) artifact).pipeline
+	public List<Validation<?>> save(ResourceEntry entry, DefinedServiceInterfaceArtifact artifact) throws IOException {
+		Pipeline pipeline = artifact instanceof DefinedServiceInterfaceArtifact 
+			? ((DefinedServiceInterfaceArtifact) artifact).pipeline
 			: new Pipeline(artifact.getInputDefinition(), artifact.getOutputDefinition());
 		savePipeline(entry, pipeline);
 		if (entry instanceof ModifiableNodeEntry) {
@@ -84,44 +81,12 @@ public class ServiceInterfaceManager implements ArtifactManager<DefinedServiceIn
 	}
 	
 	@Override
-	public Class<DefinedServiceInterface> getArtifactClass() {
-		return DefinedServiceInterface.class;
+	public Class<DefinedServiceInterfaceArtifact> getArtifactClass() {
+		return DefinedServiceInterfaceArtifact.class;
 	}
 	
-	public static class DefinedServiceInterfaceImpl implements DefinedServiceInterface {
-
-		private Pipeline pipeline;
-		private String id;
-
-		public DefinedServiceInterfaceImpl(String id, Pipeline pipeline) {
-			this.id = id;
-			this.pipeline = pipeline;
-		}
-		
-		@Override
-		public ComplexType getInputDefinition() {
-			return (ComplexType) pipeline.get(Pipeline.INPUT).getType();
-		}
-
-		@Override
-		public ComplexType getOutputDefinition() {
-			return (ComplexType) pipeline.get(Pipeline.OUTPUT).getType();
-		}
-
-		@Override
-		public String getId() {
-			return id;
-		}
-
-		@Override
-		public ServiceInterface getParent() {
-			return ValueUtils.getValue(PipelineInterfaceProperty.getInstance(), pipeline.getProperties());
-		}
-		
-	}
-
 	@Override
-	public List<String> getReferences(DefinedServiceInterface artifact) throws IOException {
+	public List<String> getReferences(DefinedServiceInterfaceArtifact artifact) throws IOException {
 		return getReferencesForInterface(artifact);
 	}
 
@@ -136,7 +101,7 @@ public class ServiceInterfaceManager implements ArtifactManager<DefinedServiceIn
 	}
 
 	@Override
-	public List<Validation<?>> updateReference(DefinedServiceInterface artifact, String from, String to) throws IOException {
+	public List<Validation<?>> updateReference(DefinedServiceInterfaceArtifact artifact, String from, String to) throws IOException {
 		return updateReferences(artifact, from, to);
 	}
 
