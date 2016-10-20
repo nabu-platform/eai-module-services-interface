@@ -46,6 +46,11 @@
 			<groupId>be.nabu.libs.services</groupId>
 			<artifactId>services-vm</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>be.nabu.libs.types</groupId>
+			<artifactId>types-mask</artifactId>
+			<scope>provided</scope>
+		</dependency>
 	</dependencies>
 
 </project>
