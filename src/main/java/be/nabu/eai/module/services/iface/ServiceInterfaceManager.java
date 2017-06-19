@@ -39,10 +39,14 @@ public class ServiceInterfaceManager implements ArtifactManager<DefinedServiceIn
 	public Pipeline loadPipeline(ResourceEntry entry, List<Validation<?>> messages) throws IOException, ParseException {
 		// we need to load the pipeline which is basically a structure
 		XMLDefinitionUnmarshaller unmarshaller = StructureManager.getLocalizedUnmarshaller(entry);
+		unmarshaller.setIgnoreUnknown(true);
 		ReadableContainer<ByteBuffer> readable = new ResourceReadableContainer((ReadableResource) EAIRepositoryUtils.getResource(entry, "pipeline.xml", false));
 		Pipeline pipeline = new Pipeline(null, null);
 		try {
 			unmarshaller.unmarshal(IOUtils.toInputStream(readable), pipeline);
+			for (String ignoredReference : unmarshaller.getIgnoredReferences()) {
+				messages.add(new ValidationMessage(Severity.ERROR, "Could not find reference '" + ignoredReference + "', it has been removed"));
+			}
 		}
 		finally {
 			readable.close();
