@@ -92,5 +92,9 @@ public class DefinedServiceInterfaceArtifact implements DefinedServiceInterface,
 	String getImplementationIdName() {
 		return implementationIdName;
 	}
+
+	public Pipeline getPipeline() {
+		return pipeline;
+	}
 	
 }
