@@ -2,6 +2,7 @@ package be.nabu.eai.module.services.iface;
 
 import be.nabu.libs.services.DefinedServiceResolverFactory;
 import be.nabu.libs.services.ServiceRuntime;
+import be.nabu.libs.services.ServiceUtils;
 import be.nabu.libs.services.api.DefinedService;
 import be.nabu.libs.services.api.ExecutionContext;
 import be.nabu.libs.services.api.Service;
@@ -35,8 +36,13 @@ public class DefinedServiceInterfaceInstance implements ServiceInstance {
 		if (resolve == null) {
 			throw new ServiceException("INTERFACE-2", "The implementation service '" + implementationId + "' does not exist");
 		}
+		ServiceRuntime serviceRuntime = new ServiceRuntime(resolve, executionContext);
+		Boolean useAsContext = (Boolean) input.get(definition.getUseAsContextName());
+		if (useAsContext != null && useAsContext) {
+			ServiceUtils.setServiceContext(serviceRuntime, implementationId);
+		}
 		// execute the service and return the result
-		return new ServiceRuntime(resolve, executionContext).run(input);
+		return serviceRuntime.run(input);
 	}
 	
 }

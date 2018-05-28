@@ -12,6 +12,8 @@ import be.nabu.libs.services.vm.PipelineInterfaceProperty;
 import be.nabu.libs.types.SimpleTypeWrapperFactory;
 import be.nabu.libs.types.api.ComplexType;
 import be.nabu.libs.types.base.SimpleElementImpl;
+import be.nabu.libs.types.base.ValueImpl;
+import be.nabu.libs.types.properties.MinOccursProperty;
 import be.nabu.libs.types.structure.Structure;
 
 public class DefinedServiceInterfaceArtifact implements DefinedServiceInterface, DefinedService {
@@ -19,7 +21,7 @@ public class DefinedServiceInterfaceArtifact implements DefinedServiceInterface,
 	Pipeline pipeline;
 	private String id;
 	private Structure serviceInput;
-	private String implementationIdName;
+	private String implementationIdName, useAsContextName;
 
 	public DefinedServiceInterfaceArtifact(String id, Pipeline pipeline) {
 		this.id = id;
@@ -56,10 +58,18 @@ public class DefinedServiceInterfaceArtifact implements DefinedServiceInterface,
 						Structure structure = new Structure();
 						structure.setName("input");
 						structure.setSuperType(DefinedServiceInterfaceArtifact.this.getInputDefinition());
-						for (int i = 0; i < 1000; i++) {
+						for (int i = 0; i < 100; i++) {
 							implementationIdName = i == 0 ? "implementationId" : "implementationId" + i;
 							if (structure.get(implementationIdName) == null) {
 								structure.add(new SimpleElementImpl<String>(implementationIdName, SimpleTypeWrapperFactory.getInstance().getWrapper().wrap(String.class), structure));
+								break;
+							}
+						}
+						// whether or not we want to set the implementation id as the service context
+						for (int i = 0; i < 100; i++) {
+							useAsContextName = i == 0 ? "useAsContext" : "useAsContext" + i;
+							if (structure.get(useAsContextName) == null) {
+								structure.add(new SimpleElementImpl<Boolean>(useAsContextName, SimpleTypeWrapperFactory.getInstance().getWrapper().wrap(Boolean.class), structure, new ValueImpl<Integer>(MinOccursProperty.getInstance(), 0)));
 								break;
 							}
 						}
@@ -91,6 +101,10 @@ public class DefinedServiceInterfaceArtifact implements DefinedServiceInterface,
 
 	String getImplementationIdName() {
 		return implementationIdName;
+	}
+
+	String getUseAsContextName() {
+		return useAsContextName;
 	}
 
 	public Pipeline getPipeline() {
