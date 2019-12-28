@@ -76,6 +76,7 @@ public class ServiceInterfaceGUIManager extends BasePortableGUIManager<DefinedSe
 		
 		// show the input & output
 		StructureGUIManager structureManager = new StructureGUIManager();
+		structureManager.setActualId(instance.getId());
 		VBox input = new VBox();
 		RootElementWithPush element = new RootElementWithPush(
 			instance.getInputDefinition(), 
