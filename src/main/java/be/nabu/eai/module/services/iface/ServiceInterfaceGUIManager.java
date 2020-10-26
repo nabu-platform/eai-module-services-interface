@@ -6,6 +6,7 @@ import java.util.List;
 
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.control.Label;
 import javafx.scene.control.SplitPane;
@@ -138,7 +139,10 @@ public class ServiceInterfaceGUIManager extends BasePortableGUIManager<DefinedSe
 			}
 		});
 		
-		iface.getChildren().addAll(new Label("Parent Interface: "), ifaceName);
+		iface.setPadding(new Insets(10));
+		Label label = new Label("Parent Interface: ");
+		label.setPadding(new Insets(5, 0, 0, 0));
+		iface.getChildren().addAll(label, ifaceName);
 		
 		box.getChildren().addAll(iface, split);
 		
