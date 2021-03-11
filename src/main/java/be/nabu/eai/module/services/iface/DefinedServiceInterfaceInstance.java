@@ -183,11 +183,20 @@ public class DefinedServiceInterfaceInstance implements ServiceInstance {
 			input = new MaskedContent(input, resolve.getServiceInterface().getInputDefinition());
 		}
 		ServiceRuntime serviceRuntime = new ServiceRuntime(resolve, executionContext);
+		String originalContext = ServiceUtils.getServiceContext(serviceRuntime);
 		if (useAsContext != null && useAsContext) {
 			ServiceUtils.setServiceContext(serviceRuntime, implementationId);
 		}
-		// execute the service and return the result
-		return serviceRuntime.run(input);
+		try {
+			// execute the service and return the result
+			return serviceRuntime.run(input);
+		}
+		// need to reset the context, otherwise the remainder of the execution could occur in a wrong context
+		finally {
+			if (useAsContext != null && useAsContext) {
+				ServiceUtils.setServiceContext(serviceRuntime, originalContext);
+			}
+		}
 	}
 	
 }
