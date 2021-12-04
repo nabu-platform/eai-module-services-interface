@@ -10,6 +10,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.control.Label;
 import javafx.scene.control.SplitPane;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
@@ -35,6 +36,7 @@ import be.nabu.libs.services.vm.PipelineInterfaceProperty;
 import be.nabu.libs.types.api.Element;
 import be.nabu.libs.types.api.ModifiableComplexType;
 import be.nabu.libs.types.base.ValueImpl;
+import be.nabu.libs.types.properties.CommentProperty;
 import be.nabu.libs.types.structure.Structure;
 import be.nabu.libs.validator.api.ValidationMessage;
 import be.nabu.libs.validator.api.ValidationMessage.Severity;
@@ -144,7 +146,32 @@ public class ServiceInterfaceGUIManager extends BasePortableGUIManager<DefinedSe
 		label.setPadding(new Insets(5, 0, 0, 0));
 		iface.getChildren().addAll(label, ifaceName);
 		
-		box.getChildren().addAll(iface, split);
+		TextArea description = new TextArea();
+		String comment = ValueUtils.getValue(CommentProperty.getInstance(), instance.getPipeline().getProperties());
+		description.setText(comment);
+		description.textProperty().addListener(new ChangeListener<String>() {
+			@Override
+			public void changed(ObservableValue<? extends String> arg0, String arg1, String arg2) {
+				if (arg2 == null || arg2.isEmpty()) {
+					// unset the pipeline attribute
+					instance.getPipeline().setProperty(new ValueImpl<String>(CommentProperty.getInstance(), null));
+					MainController.getInstance().setChanged();
+				}
+				else {
+					// reset the pipeline attribute
+					instance.getPipeline().setProperty(new ValueImpl<String>(CommentProperty.getInstance(), arg2));
+					MainController.getInstance().setChanged();
+				}
+			}
+		});
+		
+		HBox descriptionBox = new HBox();
+		descriptionBox.setPadding(new Insets(10));
+		Label descriptionLabel = new Label("Description: ");
+		descriptionLabel.setPadding(new Insets(5, 0, 0, 0));
+		descriptionBox.getChildren().addAll(descriptionLabel, description);
+		
+		box.getChildren().addAll(iface, descriptionBox, split);
 		
 		VBox.setVgrow(split, Priority.ALWAYS);
 		

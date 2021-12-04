@@ -18,7 +18,6 @@ import be.nabu.libs.services.api.Service;
 import be.nabu.libs.services.api.ServiceException;
 import be.nabu.libs.services.api.ServiceInstance;
 import be.nabu.libs.services.api.ServiceInterface;
-import be.nabu.libs.services.pojo.POJOUtils;
 import be.nabu.libs.types.ComplexContentWrapperFactory;
 import be.nabu.libs.types.TypeUtils;
 import be.nabu.libs.types.api.ComplexContent;
@@ -98,7 +97,7 @@ public class DefinedServiceInterfaceInstance implements ServiceInstance {
 					if (!(object instanceof ComplexContent)) {
 						object = ComplexContentWrapperFactory.getInstance().getWrapper().wrap(object);
 					}
-					if (object != null) {
+					if (object != null && ((ComplexContent) object).getType() instanceof DefinedType) {
 						String id = ((DefinedType) ((ComplexContent) object).getType()).getId();
 						closeMatchKey.append(";").append(key).append("=").append(id);
 						impl.setValue(id);
