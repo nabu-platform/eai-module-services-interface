@@ -22,6 +22,7 @@ public class DefinedServiceInterfaceArtifact implements DefinedServiceInterface,
 	private String id;
 	private Structure serviceInput;
 	private String implementationIdName, useAsContextName;
+	private DefinedServiceInterfaceConfiguration configuration;
 
 	public DefinedServiceInterfaceArtifact(String id, Pipeline pipeline) {
 		this.id = id;
@@ -53,27 +54,32 @@ public class DefinedServiceInterfaceArtifact implements DefinedServiceInterface,
 		return new ServiceInterface() {
 			@Override
 			public ComplexType getInputDefinition() {
-				if (serviceInput == null) {
+				if (getConfiguration().isHook()) {
+					return DefinedServiceInterfaceArtifact.this.getInputDefinition();
+				}
+				else if (serviceInput == null) {
 					synchronized(DefinedServiceInterfaceArtifact.this) {
-						Structure structure = new Structure();
-						structure.setName("input");
-						structure.setSuperType(DefinedServiceInterfaceArtifact.this.getInputDefinition());
-						for (int i = 0; i < 100; i++) {
-							implementationIdName = i == 0 ? "implementationId" : "implementationId" + i;
-							if (structure.get(implementationIdName) == null) {
-								structure.add(new SimpleElementImpl<String>(implementationIdName, SimpleTypeWrapperFactory.getInstance().getWrapper().wrap(String.class), structure));
-								break;
+						if (serviceInput == null) {
+							Structure structure = new Structure();
+							structure.setName("input");
+							structure.setSuperType(DefinedServiceInterfaceArtifact.this.getInputDefinition());
+							for (int i = 0; i < 100; i++) {
+								implementationIdName = i == 0 ? "implementationId" : "implementationId" + i;
+								if (structure.get(implementationIdName) == null) {
+									structure.add(new SimpleElementImpl<String>(implementationIdName, SimpleTypeWrapperFactory.getInstance().getWrapper().wrap(String.class), structure));
+									break;
+								}
 							}
-						}
-						// whether or not we want to set the implementation id as the service context
-						for (int i = 0; i < 100; i++) {
-							useAsContextName = i == 0 ? "useAsContext" : "useAsContext" + i;
-							if (structure.get(useAsContextName) == null) {
-								structure.add(new SimpleElementImpl<Boolean>(useAsContextName, SimpleTypeWrapperFactory.getInstance().getWrapper().wrap(Boolean.class), structure, new ValueImpl<Integer>(MinOccursProperty.getInstance(), 0)));
-								break;
+							// whether or not we want to set the implementation id as the service context
+							for (int i = 0; i < 100; i++) {
+								useAsContextName = i == 0 ? "useAsContext" : "useAsContext" + i;
+								if (structure.get(useAsContextName) == null) {
+									structure.add(new SimpleElementImpl<Boolean>(useAsContextName, SimpleTypeWrapperFactory.getInstance().getWrapper().wrap(Boolean.class), structure, new ValueImpl<Integer>(MinOccursProperty.getInstance(), 0)));
+									break;
+								}
 							}
+							serviceInput = structure;
 						}
-						serviceInput = structure;
 					}
 				}
 				return serviceInput;
@@ -109,6 +115,17 @@ public class DefinedServiceInterfaceArtifact implements DefinedServiceInterface,
 
 	public Pipeline getPipeline() {
 		return pipeline;
+	}
+
+	public DefinedServiceInterfaceConfiguration getConfiguration() {
+		if (configuration == null) {
+			configuration = new DefinedServiceInterfaceConfiguration();
+		}
+		return configuration;
+	}
+
+	public void setConfiguration(DefinedServiceInterfaceConfiguration configuration) {
+		this.configuration = configuration;
 	}
 	
 }

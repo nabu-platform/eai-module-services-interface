@@ -9,10 +9,12 @@ import java.util.Map;
 
 import be.nabu.eai.repository.EAIResourceRepository;
 import be.nabu.libs.artifacts.api.Artifact;
+import be.nabu.libs.services.DefinedServiceInterfaceResolverFactory;
 import be.nabu.libs.services.DefinedServiceResolverFactory;
 import be.nabu.libs.services.ServiceRuntime;
 import be.nabu.libs.services.ServiceUtils;
 import be.nabu.libs.services.api.DefinedService;
+import be.nabu.libs.services.api.DefinedServiceInterface;
 import be.nabu.libs.services.api.ExecutionContext;
 import be.nabu.libs.services.api.Service;
 import be.nabu.libs.services.api.ServiceException;
@@ -131,69 +133,103 @@ public class DefinedServiceInterfaceInstance implements ServiceInstance {
 	
 	@Override
 	public ComplexContent execute(ExecutionContext executionContext, ComplexContent input) throws ServiceException {
-		String implementationId = null;
-		if (input == null || input.get(definition.getImplementationIdName()) == null) {
-			implementationId = getClosestMatch(input);
-		}
-		else {
-			implementationId = (String) input.get(definition.getImplementationIdName());
-		}
-		if (implementationId == null) {
-			throw new ServiceException("INTERFACE-1", "Need at the very least an implementation service to call");
-		}
-		// we can pass precaptured input to the implementation
-		int index = implementationId.indexOf('$');
-		String additionalContent = null;
-		if (index > 0) {
-			additionalContent = implementationId.substring(index + 1);
-			implementationId = implementationId.substring(0, index);
-		}
-		DefinedService resolve = DefinedServiceResolverFactory.getInstance().getResolver().resolve(implementationId);
-		if (resolve == null) {
-			throw new ServiceException("INTERFACE-2", "The implementation service '" + implementationId + "' does not exist");
-		}
-		Boolean useAsContext = (Boolean) input.get(definition.getUseAsContextName());
-		
-		// check if we have a "closure"
-		if (additionalContent != null) {
-			XMLBinding binding = new XMLBinding(resolve.getServiceInterface().getInputDefinition(), Charset.forName("UTF-8"));
-			try {
-				ComplexContent additionalInput = binding.unmarshal(new ByteArrayInputStream(additionalContent.getBytes("UTF-8")), new Window[0]);
-				// overwrite the values from the runtime (if applicable)
-				for (Element<?> child : TypeUtils.getAllChildren(input.getType())) {
-					// only try to set it if it exists in the target service
-					if (additionalInput.getType().get(child.getName()) != null) {
-						Object value = input.get(child.getName());
-						if (value != null) {
-							additionalInput.set(child.getName(), value);
-						}
+		// if it is a hook, we just run all the implementations
+		if (definition.getConfiguration().isHook()) {
+			DefinedServiceInterface hookIface = DefinedServiceInterfaceResolverFactory.getInstance().getResolver().resolve("be.nabu.eai.module.services.iface.HookListener.fire");
+			for (DefinedService service : EAIResourceRepository.getInstance().getArtifacts(DefinedService.class)) {
+				if (!(service instanceof DefinedServiceInterfaceArtifact) && !service.getId().equals(definition.getId())) {
+					// if it is a generic hook listener, we run that
+					if (isImplementation(service, hookIface)) {
+						ServiceRuntime serviceRuntime = new ServiceRuntime(service, executionContext);
+						ComplexContent hookInput = service.getServiceInterface().getInputDefinition().newInstance();
+						hookInput.set("hook", definition.getId());
+						hookInput.set("input", input);
+						serviceRuntime.run(hookInput);
+					}
+					else if (isImplementation(service, definition)) {
+						ServiceRuntime serviceRuntime = new ServiceRuntime(service, executionContext);
+						serviceRuntime.run(input);
 					}
 				}
-				input = additionalInput;
 			}
-			catch (Exception e) {
-				throw new ServiceException("INTERFACE-3", "Invalid captured content", e);
-			}
+			// return an empty output
+			return definition.getServiceInterface().getOutputDefinition().newInstance();
 		}
-		// otherwise we do a mask in case you are playing with types
-		// e.g. the interface might have a java.lang.Object, while the implementation might have a specific type
-		// it currently does not play nice
 		else {
-			input = new MaskedContent(input, resolve.getServiceInterface().getInputDefinition());
-		}
-		ServiceRuntime serviceRuntime = new ServiceRuntime(resolve, executionContext);
-		String originalContext = ServiceUtils.getServiceContext(serviceRuntime);
-		if (useAsContext != null && useAsContext) {
-			ServiceUtils.setServiceContext(serviceRuntime, implementationId);
-		}
-		try {
-			// execute the service and return the result
-			return serviceRuntime.run(input);
-		}
-		// need to reset the context, otherwise the remainder of the execution could occur in a wrong context
-		finally {
+			String implementationId = null;
+			if (input == null || input.get(definition.getImplementationIdName()) == null) {
+				implementationId = getClosestMatch(input);
+			}
+			else {
+				implementationId = (String) input.get(definition.getImplementationIdName());
+			}
+			if (implementationId == null) {
+				throw new ServiceException("INTERFACE-1", "Need at the very least an implementation service to call");
+			}
+			// we can pass precaptured input to the implementation
+			int index = implementationId.indexOf('$');
+			String additionalContent = null;
+			if (index > 0) {
+				additionalContent = implementationId.substring(index + 1);
+				implementationId = implementationId.substring(0, index);
+			}
+			DefinedService resolve = DefinedServiceResolverFactory.getInstance().getResolver().resolve(implementationId);
+			if (resolve == null) {
+				throw new ServiceException("INTERFACE-2", "The implementation service '" + implementationId + "' does not exist");
+			}
+			Boolean useAsContext = (Boolean) input.get(definition.getUseAsContextName());
+			
+			// check if we have a "closure"
+			if (additionalContent != null) {
+				XMLBinding binding = new XMLBinding(resolve.getServiceInterface().getInputDefinition(), Charset.forName("UTF-8"));
+				try {
+					ComplexContent additionalInput = binding.unmarshal(new ByteArrayInputStream(additionalContent.getBytes("UTF-8")), new Window[0]);
+					// overwrite the values from the runtime (if applicable)
+					for (Element<?> child : TypeUtils.getAllChildren(input.getType())) {
+						// only try to set it if it exists in the target service
+						if (additionalInput.getType().get(child.getName()) != null) {
+							Object value = input.get(child.getName());
+							if (value != null) {
+								additionalInput.set(child.getName(), value);
+							}
+						}
+					}
+					input = additionalInput;
+				}
+				catch (Exception e) {
+					throw new ServiceException("INTERFACE-3", "Invalid captured content", e);
+				}
+			}
+			// otherwise we do a mask in case you are playing with types
+			// e.g. the interface might have a java.lang.Object, while the implementation might have a specific type
+			// it currently does not play nice
+			else {
+				// when masking we might do unnecessary conversions making it harder to pass in instances of extensions as defined in the implementation
+				// so suppose your spec has input type A and the implementation has input type B where B extends A
+				// some frameworks (e.g. I/O) scan the interface of the implementation and can dynamically create instance B with metadata captured at some other point
+				// however, the masked content does not allow this B instance to pass correctly, presumably because it is masked based on type A into a new B
+				// by mapping it to the input like this, it is only converted as needed
+	//			input = new MaskedContent(input, resolve.getServiceInterface().getInputDefinition());
+				ComplexContent newInstance = resolve.getServiceInterface().getInputDefinition().newInstance();
+				for (Element<?> child : TypeUtils.getAllChildren(newInstance.getType())) {
+					newInstance.set(child.getName(), input.get(child.getName()));
+				}
+				input = newInstance;
+			}
+			ServiceRuntime serviceRuntime = new ServiceRuntime(resolve, executionContext);
+			String originalContext = ServiceUtils.getServiceContext(serviceRuntime);
 			if (useAsContext != null && useAsContext) {
-				ServiceUtils.setServiceContext(serviceRuntime, originalContext);
+				ServiceUtils.setServiceContext(serviceRuntime, implementationId);
+			}
+			try {
+				// execute the service and return the result
+				return serviceRuntime.run(input);
+			}
+			// need to reset the context, otherwise the remainder of the execution could occur in a wrong context
+			finally {
+				if (useAsContext != null && useAsContext) {
+					ServiceUtils.setServiceContext(serviceRuntime, originalContext);
+				}
 			}
 		}
 	}

@@ -4,10 +4,13 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.List;
 
+import com.sun.crypto.provider.DESCipher;
+
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TextArea;
@@ -33,8 +36,10 @@ import be.nabu.libs.services.DefinedServiceInterfaceResolverFactory;
 import be.nabu.libs.services.api.DefinedServiceInterface;
 import be.nabu.libs.services.vm.Pipeline;
 import be.nabu.libs.services.vm.PipelineInterfaceProperty;
+import be.nabu.libs.types.api.ComplexType;
 import be.nabu.libs.types.api.Element;
 import be.nabu.libs.types.api.ModifiableComplexType;
+import be.nabu.libs.types.api.Type;
 import be.nabu.libs.types.base.ValueImpl;
 import be.nabu.libs.types.properties.CommentProperty;
 import be.nabu.libs.types.structure.Structure;
@@ -77,6 +82,9 @@ public class ServiceInterfaceGUIManager extends BasePortableGUIManager<DefinedSe
 		SplitPane split = new SplitPane();
 		split.setOrientation(Orientation.HORIZONTAL);
 		
+		CheckBox hook = new CheckBox("Is hook");
+		hook.setSelected(instance.getConfiguration().isHook());
+		
 		// show the input & output
 		StructureGUIManager structureManager = new StructureGUIManager();
 		structureManager.setActualId(instance.getId());
@@ -106,6 +114,25 @@ public class ServiceInterfaceGUIManager extends BasePortableGUIManager<DefinedSe
 		outputTree.setClipboardHandler(new ElementClipboardHandler(outputTree));
 		split.getItems().add(output);
 		
+		// disable the tree if we have the hook property selected
+		outputTree.disableProperty().bind(hook.selectedProperty());
+		
+		hook.selectedProperty().addListener(new ChangeListener<Boolean>() {
+			@Override
+			public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+				instance.getConfiguration().setHook(newValue != null && newValue);
+				MainController.getInstance().setChanged();
+				// if it is a hook, we remove everything from the output
+				if (instance.getConfiguration().isHook()) {
+					Structure outputDefinition = (Structure) instance.getOutputDefinition();
+					// unset any super type
+					outputDefinition.setSuperType((Type) null);
+					// remove any children
+					outputDefinition.removeAll();
+					outputTree.refresh();
+				}
+			}
+		});
 		
 		VBox box = new VBox();
 		HBox iface = new HBox();
@@ -147,6 +174,9 @@ public class ServiceInterfaceGUIManager extends BasePortableGUIManager<DefinedSe
 		iface.getChildren().addAll(label, ifaceName);
 		
 		TextArea description = new TextArea();
+		description.setMinHeight(150);
+		description.setMaxHeight(150);
+		description.setPrefHeight(150);
 		String comment = ValueUtils.getValue(CommentProperty.getInstance(), instance.getPipeline().getProperties());
 		description.setText(comment);
 		description.textProperty().addListener(new ChangeListener<String>() {
@@ -171,7 +201,8 @@ public class ServiceInterfaceGUIManager extends BasePortableGUIManager<DefinedSe
 		descriptionLabel.setPadding(new Insets(5, 0, 0, 0));
 		descriptionBox.getChildren().addAll(descriptionLabel, description);
 		
-		box.getChildren().addAll(iface, descriptionBox, split);
+		hook.setPadding(new Insets(10));
+		box.getChildren().addAll(hook, iface, descriptionBox, split);
 		
 		VBox.setVgrow(split, Priority.ALWAYS);
 		
