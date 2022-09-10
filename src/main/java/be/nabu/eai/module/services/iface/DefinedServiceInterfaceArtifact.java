@@ -66,7 +66,7 @@ public class DefinedServiceInterfaceArtifact implements DefinedServiceInterface,
 							for (int i = 0; i < 100; i++) {
 								implementationIdName = i == 0 ? "implementationId" : "implementationId" + i;
 								if (structure.get(implementationIdName) == null) {
-									structure.add(new SimpleElementImpl<String>(implementationIdName, SimpleTypeWrapperFactory.getInstance().getWrapper().wrap(String.class), structure));
+									structure.add(new SimpleElementImpl<String>(implementationIdName, SimpleTypeWrapperFactory.getInstance().getWrapper().wrap(String.class), structure, new ValueImpl<Integer>(MinOccursProperty.getInstance(), 0)));
 									break;
 								}
 							}
