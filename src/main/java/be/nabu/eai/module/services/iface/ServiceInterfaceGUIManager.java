@@ -21,8 +21,6 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.List;
 
-import com.sun.crypto.provider.DESCipher;
-
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
